@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SharpLight", "SharpLight\SharpLight.fsproj", "{01F5E958-FE4C-4D79-AF9B-FA33A7981064}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "MvcFSharpToRefactor", "MvcFSharp\MvcFSharpToRefactor.fsproj", "{A9A8C279-7EFD-4652-8AD6-F8DA8DAA442A}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ProjectToTestStuff", "ProjectToTestStuff\ProjectToTestStuff.fsproj", "{854A7D01-9A83-410C-AEB2-89D104206778}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SharpLightTestApplication", "SharpLightTestApplication\SharpLightTestApplication.fsproj", "{F38C1D68-0806-49DA-8F33-4CD9B4B27056}"
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 5
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = https://tfs09.codeplex.com/
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = MvcFSharp\\MvcFSharpToRefactor.fsproj
+		SccProjectName1 = MvcFSharp
+		SccLocalPath1 = MvcFSharp
+		SccProjectUniqueName2 = ProjectToTestStuff\\ProjectToTestStuff.fsproj
+		SccProjectName2 = ProjectToTestStuff
+		SccLocalPath2 = ProjectToTestStuff
+		SccProjectUniqueName3 = SharpLight\\SharpLight.fsproj
+		SccProjectName3 = SharpLight
+		SccLocalPath3 = SharpLight
+		SccProjectUniqueName4 = SharpLightTestApplication\\SharpLightTestApplication.fsproj
+		SccProjectName4 = SharpLightTestApplication
+		SccLocalPath4 = SharpLightTestApplication
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{01F5E958-FE4C-4D79-AF9B-FA33A7981064}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{01F5E958-FE4C-4D79-AF9B-FA33A7981064}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{01F5E958-FE4C-4D79-AF9B-FA33A7981064}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{01F5E958-FE4C-4D79-AF9B-FA33A7981064}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A9A8C279-7EFD-4652-8AD6-F8DA8DAA442A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A9A8C279-7EFD-4652-8AD6-F8DA8DAA442A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A9A8C279-7EFD-4652-8AD6-F8DA8DAA442A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{854A7D01-9A83-410C-AEB2-89D104206778}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{854A7D01-9A83-410C-AEB2-89D104206778}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{854A7D01-9A83-410C-AEB2-89D104206778}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{854A7D01-9A83-410C-AEB2-89D104206778}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F38C1D68-0806-49DA-8F33-4CD9B4B27056}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F38C1D68-0806-49DA-8F33-4CD9B4B27056}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F38C1D68-0806-49DA-8F33-4CD9B4B27056}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F38C1D68-0806-49DA-8F33-4CD9B4B27056}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
