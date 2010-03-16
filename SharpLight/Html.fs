@@ -79,9 +79,9 @@ let myLink=
 
 let getMatches html predicate = 
                                     let rec matcher html =  seq{match html with
-                                                                                | Tag tag  when(predicate tag) -> yield tag
-                                                                                                                  yield! Seq.concat( tag.children|> Seq.map matcher)
-                                                                                |_ ->()}
+                                                                    | Tag tag  when(predicate tag) -> yield tag
+                                                                                                      yield! Seq.concat( tag.children|> Seq.map matcher)
+                                                                    |_ ->()}
                                     in LazyList.ofSeq( matcher html)
 
 

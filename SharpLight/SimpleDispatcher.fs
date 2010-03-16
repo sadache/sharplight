@@ -20,16 +20,15 @@ and 'a ParamMatcher='a->Matcher
 type LightController() = 
            abstract member Matchers : Matcher list
            interface  System.Web.IHttpHandler with
-                member x.ProcessRequest context= let makeRequest r=   {Request=r; UrlParts= (r.Path.Trim [|'/'|]) .Split [|'/'|] |> Seq.toList;Method=match r.HttpMethod with
-                                                                                                                                                        |"GET"->Get
-                                                                                                                                                        |"Post" ->Post
-                                                                                                                                                        |"Put" -> Put
-                                                                                                                                                        | _ -> Unsupported}
-                                                 let request=makeRequest context.Request 
-                                                 let   matched=x.Matchers |> Seq.tryPick ((|>) request)                                                           
-                                                 in match matched with
-                                                       |None-> context.Response.StatusCode <- 404
-                                                       |Some servlet -> servlet request context.Response
+                member x.ProcessRequest context= 
+                                let makeRequest r=   {Request=r; 
+                                                      UrlParts= (r.Path.Trim [|'/'|]) .Split [|'/'|] |> Seq.toList;
+                                                      Method=match r.HttpMethod with |"GET"->Get |"Post" ->Post}
+                                let request=makeRequest context.Request 
+                                let   matched=x.Matchers |> Seq.tryPick ((|>) request)                                                           
+                                in match matched with
+                                               |None-> context.Response.StatusCode <- 404
+                                               |Some servlet -> servlet request context.Response
                 member x.IsReusable= true
 ///Need to test how effecient this function is
 ///
