@@ -11,6 +11,7 @@ module Sample  =
                                text "Mosquito Programming vs Functional Programming"])
                                
 
+ let (./.)=(<|)
                                    
 type SimpleDispatcher()= inherit LightController() 
                              override x.Matchers=[dir "sharplight" [dir "friends" [dir "sadek.text" [web_post <| ok -| yield_string "no post for sadek"];
