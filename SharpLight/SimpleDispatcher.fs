@@ -5,14 +5,15 @@ open  Microsoft.FSharp.Collections
 open LazyList
 open Html
 open System.Web
-
-let swap f = fun b  a-> f a b
-
-type Servlet=  Request->Response
+open Reader
+let flip f = fun b  a-> f a b
+type 'a Endo= 'a -> 'a
+type Servlet=  Reader<Request,Response>
 and Url= String
 and Request= {Request:Web.HttpRequest;UrlParts:string LazyList;Method:Method;AcceptedMime: string seq}
 and Method= Get|Post|Put|Unsupported
-and Response= Web.HttpResponse -> unit
+and Response ={ Status:int*string;MimeType:string; Content:char seq}
+
 type Matcher = abstract member Do: (Request->  Servlet Option)
                abstract member Info:String
 
@@ -33,7 +34,7 @@ type LightController() =
                                 let   matched=matchIt request x.Matchers                                                          
                                 in match matched with
                                                |None-> context.Response.StatusCode <- 404
-                                               |Some servlet -> servlet request context.Response
+                                               |Some servlet -> Seq. iter ( fun c -> context.Response.Write (c:char)) ((runReader servlet request).Content)
                 member x.IsReusable= true
 ///Need to test how effecient this function is
 ///
@@ -70,46 +71,39 @@ let webMethod1 m (subs :Matcher  list) ={new Matcher with
 let lift2 f  =fun b c -> fun a -> f (b a) (c a)   
 let lift1 f= fun g a -> f(g(a))
 let lift0 a= fun(_) -> a                                                   
-let(+^)= lift2 (fun u1 u2 -> do u1
-                             u2)
-let(+^^)= lift2 (+^)
+//let(+^)= lift2 (fun u1 u2 -> do u1
+//                             u2)
+//let(+^^)= lift2 (+^)
 
 
-
-let (-|) s1 s2:Servlet= s1 +^^ s2
+type ComposableServlet= Reader<Request,Response Endo>
+//hacky
+let (-|) :(ComposableServlet)-> (ComposableServlet) -> ComposableServlet= (>>>)
 
 let (|=)= (<|)
 let (=>)= (<|)
 
-let yield_string (s:string):Servlet= fun _ -> fun r -> do r.Output.Write s 
-                                                          r.Flush()
+let yield_string (s:string):ComposableServlet=  reader{return fun res -> {res with Content=Seq.append res.Content <| s.ToCharArray()}}                                                                    
                                                          
-let mime t :Servlet = fun _ -> fun r -> r.ContentType <- t
-let code code :Servlet=fun _ -> fun r -> r.StatusCode  <- code
-let ok:Servlet = code 200 
+let mime t :ComposableServlet = reader{return fun res -> {res with MimeType=t}}
+let code code :ComposableServlet=reader{return fun res ->{res with Status=(code,"")}}
+let ok:ComposableServlet = code 200 
 let text_html= "text/html"
 let no_content (s:string)=code 204  -| mime text_html -| yield_string  s
 
 
 let yield_html (html:Html)= mime text_html -| yield_string (html |> to_s) 
                                                        
-let yield_stream  (s:IO.Stream):Servlet= fun _ ->fun (r:HttpResponse) -> do r.Output.Write s 
-                                                                         r.Flush() 
+//let yield_stream  (s:IO.Stream):Servlet= fun res  _ -> {res with  Content= s.
 
 
-let from_data f ts : Servlet= fun rq-> f(rq) |> ts <| rq
-                                         
-let doNothing=fun(rq)->fun(r)->()
+let from_data f ts : ComposableServlet= reader {let! r= asks f in return! ts r}
 
-
+let blank= returnR {Response.Status=(200,"");MimeType="";Content=Seq.empty}                                         
+let doNothing=ok <*>  blank
 
 let combination= dir "products" [dir "old"
                                [webMethod Get doNothing;
-                                webMethod Post ( ok -| yield_string "post on products/old")]]
-                               
-
-
-
-                    
+                                webMethod Post (  (ok >>> (yield_string "post on products/old") <*> blank))]] 
                   
 type SimpleDispatcher= inherit LightController override x.Matchers=[combination]             
