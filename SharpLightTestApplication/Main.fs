@@ -14,20 +14,16 @@ module Sample  =
 
  let (./.)=(<|)
                                    
-type SimpleDispatcher()= inherit LightController() 
-                             override x.Matchers=[dir "sharplight" [dir "friends" [dir "sadek.text" [web_post <|( ok -| (yield_string "no post for sadek") <*> blank)];
-                                                                                                                        
-                                                                                   dir "sadek.htm"  [web_get <| let html =a "http://www.sadekdrobi.com" 
-                                                                                                                                    << [text "sadek"]
-                                                                                                                       in ok 
-                                                                                                                           -| (yield_html  Sample.myComponent) <*> blank ]]];
-                                                                                                                               
-                                                                        
-                                                   any <| (ok 
-                                                           -| (mime text_html)
-                                                           -| (from_data (fun rq -> rq.Request.Url.PathAndQuery) yield_string) <*> blank) ]
-                                                           
-                                                           
+type SimpleDispatcher()= 
+    inherit LightController() 
+         override x.Matchers=[dir "sharplight" [dir "friends" [dir "sadek.text" [web_post <|( ok >>> yield_string "no post for sadek" <*> blank)];                                                                                                                        
+                                                               dir "sadek.htm"  [web_get <| let html =a "http://www.sadekdrobi.com" << [text "sadek"]
+                                                                                            in ok >>> yield_html  Sample.myComponent <*> blank ]]];                                                                                                                               
+                                                    
+                               any <| (ok >>> (mime text_html)
+                                          >>> (from_data (fun rq -> rq.Request.Url.PathAndQuery) yield_string) <*> blank) ]
+                                       
+                                       
 
 
 
