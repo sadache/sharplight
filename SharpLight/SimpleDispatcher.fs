@@ -68,20 +68,10 @@ let webMethod1 m (subs :Matcher  list) ={new Matcher with
                                                 member x.Do = fun(rq) -> if rq.Method = m then matchIt rq subs else None
                                                 member x.Info= m.ToString()}
 
-let lift2 f  =fun b c -> fun a -> f (b a) (c a)   
-let lift1 f= fun g a -> f(g(a))
-let lift0 a= fun(_) -> a                                                   
-//let(+^)= lift2 (fun u1 u2 -> do u1
-//                             u2)
-//let(+^^)= lift2 (+^)
-
 
 type ComposableServlet= Reader<Request,Response Endo>
 //hacky
 let (-|) :(ComposableServlet)-> (ComposableServlet) -> ComposableServlet= (>>>)
-
-let (|=)= (<|)
-let (=>)= (<|)
 
 let yield_string (s:string):ComposableServlet=  reader{return fun res -> {res with Content=Seq.append res.Content <| s.ToCharArray()}}                                                                    
                                                          
