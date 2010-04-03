@@ -1,19 +1,17 @@
 ﻿module SharpLight.Core
-
+open FunUtils
 open System
 open  Microsoft.FSharp.Collections
 open LazyList
 open Html
 open System.Web
 open Reader
-let flip f = fun b  a-> f a b
-type 'a Endo= 'a -> 'a
-type Servlet=  Reader<Request,Response>
-and Url= String
-and Request= {Request:Web.HttpRequest;UrlParts:string LazyList;Method:Method;AcceptedMime: string seq}
-and Method= Get|Post|Put|Unsupported
-and Response ={ Status:int*string;MimeType:string; Content:char seq}
 
+type Url= String
+type  Request= {Request:Web.HttpRequest;UrlParts:string LazyList;Method:Method;AcceptedMime: string seq}
+and Method= Get|Post|Put|Unsupported
+type Response ={ Status:int*string;MimeType:string; Content:char seq}
+type Servlet=  Reader<Request,Response>
 type Matcher = abstract member Do: (Request->  Servlet Option)
                abstract member Info:String
 
@@ -26,21 +24,22 @@ type LightController() =
            abstract member Matchers : Matcher list
            interface  System.Web.IHttpHandler with
                 member x.ProcessRequest context= 
-                                let makeRequest r=   {Request=r; 
-                                                      UrlParts= (r.Path.Trim [|'/'|]) .Split [|'/'|] |> LazyList.ofArray
-                                                      Method=match r.HttpMethod with |"GET"->Get |"Post" ->Post|_-> Unsupported;
-                                                      AcceptedMime=r.AcceptTypes}
-                                let request=makeRequest context.Request 
-                                let   matched=matchIt request x.Matchers                                                          
-                                in match matched with
-                                               |None-> context.Response.StatusCode <- 404
-                                               |Some servlet -> Seq. iter ( fun c -> context.Response.Write (c:char)) ((runReader servlet request).Content)
+                        let makeRequest r=   {Request=r; 
+                                              UrlParts= (r.Path.Trim [|'/'|]) .Split [|'/'|] |> LazyList.ofArray
+                                              Method=match r.HttpMethod with |"GET"->Get |"Post" ->Post|_-> Unsupported;
+                                              AcceptedMime=r.AcceptTypes}
+                        let request=makeRequest context.Request 
+                        let   matched=matchIt request x.Matchers                                                          
+                        in match matched with
+                               |None-> context.Response.StatusCode <- 404
+                               |Some servlet -> Seq.iter ( fun c -> context.Response.Write (c:char)) <| (runReader servlet request).Content
                 member x.IsReusable= true
 
 ///Need to test how effecient this function is
 ///
 let splitAt n xs=(LazyList.take n xs,LazyList.skip n xs)
 
+//matchers
 let dir (dir:string)(subs :Matcher  list) : Matcher=  
        let dirSplitted=(LazyList.ofArray <| dir.Split('/'))
        in {new Matcher with
@@ -73,7 +72,7 @@ let webMethod1 m (subs :Matcher  list) =
         member x.Do = fun(rq) -> if rq.Method = m then matchIt rq subs else None
         member x.Info= m.ToString()}
 
-
+//composable partial responses
 type ComposableServlet= Reader<Request,Response Endo>
 //hacky
 let (-|) :(ComposableServlet)-> (ComposableServlet) -> ComposableServlet= (>>>)
@@ -91,7 +90,7 @@ let yield_html (html:Html)= mime text_html >>> yield_string (html |> to_s)
                                                        
 //let yield_stream  (s:IO.Stream):Servlet= fun res  _ -> {res with  Content= s.
 
-
+//using data in Request object
 let from_data f ts : ComposableServlet= reader {let! r= asks f in return! ts r}
 
 let blank= returnR {Response.Status=(200,"");MimeType="";Content=Seq.empty}                                         
@@ -99,6 +98,6 @@ let doNothing=ok <*>  blank
 
 let combination= dir "products" [dir "old"
                                [webMethod Get doNothing;
-                                webMethod Post (  (ok >>> (yield_string "post on products/old") <*> blank))]] 
+                                webMethod Post (ok >>> yield_string "post on products/old" <*> blank)]] 
                   
 type SimpleDispatcher= inherit LightController override x.Matchers=[combination]             
