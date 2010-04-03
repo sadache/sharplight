@@ -9,7 +9,8 @@ open Reader
 
 type Url= String
 type  Request= {Request:Web.HttpRequest;UrlParts:string LazyList;Method:Method;AcceptedMime: string seq}
-and Method= Get|Post|Put|Unsupported
+and   Method= Get|Post|Put|Unsupported
+
 type Response ={ Status:int*string;MimeType:string; Content:char seq}
 type Servlet=  Reader<Request,Response>
 type Matcher = abstract member Do: (Request->  Servlet Option)
@@ -39,6 +40,8 @@ type LightController() =
 ///
 let splitAt n xs=(LazyList.take n xs,LazyList.skip n xs)
 
+type urlParams=Map<string,string> 
+//TODO I might need a State monad here!
 //matchers
 let dir (dir:string)(subs :Matcher  list) : Matcher=  
        let dirSplitted=(LazyList.ofArray <| dir.Split('/'))
@@ -91,6 +94,7 @@ let yield_html (html:Html)= mime text_html >>> yield_string (html |> to_s)
 //let yield_stream  (s:IO.Stream):Servlet= fun res  _ -> {res with  Content= s.
 
 //using data in Request object
+//I need to define more useful composable data functions
 let from_data f ts : ComposableServlet= reader {let! r= asks f in return! ts r}
 
 let blank= returnR {Response.Status=(200,"");MimeType="";Content=Seq.empty}                                         
