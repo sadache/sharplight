@@ -8,7 +8,7 @@ open System.Web
 open Reader
 
 type Url= String
-type  Request= {Request:Web.HttpRequest;UrlParts:string LazyList;Method:Method;AcceptedMime: string seq}
+type  Request= {Request:Web.HttpRequest;UrlParts:string LazyList;Method:Method;AcceptedMime: string seq;UrlParams:Map<string,string>}
 and   Method= Get|Post|Put|Unsupported
 
 type Response ={ Status:int*string;MimeType:string; Content:char seq}
@@ -26,6 +26,7 @@ type LightController() =
            interface  System.Web.IHttpHandler with
                 member x.ProcessRequest context= 
                         let makeRequest r=   {Request=r; 
+                                              UrlParams=Map.empty;
                                               UrlParts= (r.Path.Trim [|'/'|]) .Split [|'/'|] |> LazyList.ofArray
                                               Method=match r.HttpMethod with |"GET"->Get |"Post" ->Post|_-> Unsupported;
                                               AcceptedMime=r.AcceptTypes}
@@ -47,7 +48,7 @@ let dir (dir:string)(subs :Matcher  list) : Matcher=
        let dirSplitted=(LazyList.ofArray <| dir.Split('/'))
        in {new Matcher with
          member x.Do=fun rq->let concerned,rest= splitAt (LazyList.length dirSplitted) rq.UrlParts
-                             in if  dirSplitted = concerned then matchIt  {rq with UrlParts= rest} subs 
+                             in if  dirSplitted = concerned then matchIt  {rq with UrlParts= rest;} subs 
                                 else None
          member x.Info= "not documented"  }
 
