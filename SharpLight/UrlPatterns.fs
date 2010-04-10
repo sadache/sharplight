@@ -1,4 +1,8 @@
 ﻿module UrlPatterns
+#if INTERACTIVE
+#r "..//Dependencies//FSharp.PowerPack.dll"
+#load "Maybe.fs" "FunUtils.fs"
+#endif
 open System.Text.RegularExpressions
 open FunUtils
 open Maybe
@@ -60,3 +64,4 @@ let matchUrlSectionedNoGreedy (pattern:string) =
                                                     return concatMap  p a }) (Some Map.empty) matched 
          in Option.map (fun m -> (m,String.concat "/" rest)) result
             
+let anotherResult= matchUrlSectionedNoGreedy "Show/{topics}/{id}/{title}" "Show/Topic/123/This-is-an-example/rest/evenmore/tomatch/later"
