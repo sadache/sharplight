@@ -1,7 +1,7 @@
 ﻿module SharpLight.Core
 open FunUtils
 open System
-open  Microsoft.FSharp.Collections
+open Microsoft.FSharp.Collections
 open LazyList
 open Html
 open System.Web
@@ -39,7 +39,7 @@ type LightController() =
 
 ///Need to test how effecient this function is
 ///
-let splitAt n xs=(LazyList.take n xs,LazyList.skip n xs)
+
 
 type urlParams=Map<string,string> 
 //TODO I might need a State monad here!
