@@ -1,5 +1,5 @@
 ﻿module Randexp
-#r "..//Dependencies//FSharp.PowerPack.dll"
+//#r "..//Dependencies//FSharp.PowerPack.dll"
 open System
 open LazyList
 type Lang = LazyList<String>

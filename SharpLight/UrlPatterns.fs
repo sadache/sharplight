@@ -41,7 +41,7 @@ let rec foldr (f: 'a -> 's Lazy-> 's  ) z list=
       match list with LazyList.Cons(x,xs)-> f x (lazy(foldr f z xs))
                       |LazyList.Nil -> z 
                         
-let concatMap m1 m2= m1
+let concatMap m1 m2= Map.fold (fun m key value-> Map.add key value m) m1 m2
 
 // This function looks very hacky and buggy for me, I have to come back to it
 let matchUrlSectionedNoGreedy (pattern:string) = 
@@ -57,6 +57,6 @@ let matchUrlSectionedNoGreedy (pattern:string) =
          let matched= LazyList.map2 ( matchAndExtractParams) patternSplitted concerned
          let result= foldr (fun m previous -> maybe{let! a=m 
                                                     let! p= previous.Value
-                                                    return concatMap  p m }) (Some Map.empty) matched 
+                                                    return concatMap  p a }) (Some Map.empty) matched 
          in Option.map (fun m -> (m,String.concat "/" rest)) result
             

@@ -53,6 +53,7 @@
     <None Include="Script.fsx" />
     <Compile Include="FunUtils.fs" />
     <Compile Include="Html.fs" />
+    <Compile Include="Maybe.fs" />
     <Compile Include="Reader.fs" />
     <Compile Include="SimpleDispatcher.fs" />
     <Compile Include="UrlPatterns.fs" />
