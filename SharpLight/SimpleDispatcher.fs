@@ -35,7 +35,7 @@ type LightController() =
                         let   matched=matchIt request x.Matchers                                                          
                         in match matched with
                                |None-> context.Response.StatusCode <- 404
-                               |Some servlet -> ()//Seq.iter ( fun c -> context.Response.Write (c:char)) <| (runReader servlet request).Content
+                               |Some servlet -> Seq.iter ( fun c -> context.Response.OutputStream.WriteByte (c:byte)) <| snd (runReader servlet request)
                 member x.IsReusable= true
 
 ///Need to test how effecient this function is
