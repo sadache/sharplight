@@ -10,10 +10,11 @@ open Reader
 type Url= String
 type  Request= {Request:Web.HttpRequest;UrlParts:string LazyList;Method:Method;AcceptedMime: string seq;UrlParams:Map<string,string>}
 and   Method= Get|Post|Put|Unsupported
-
-type Response ={ Status:int*string;MimeType:string; Content:char seq}
-type Servlet=  Reader<Request,Response>
-type Matcher = abstract member Do: (Request->  Servlet Option)
+type ResponseMeta={ Status:int*string;MimeType:string}
+type 'a Response =ResponseMeta * 'a
+type 'a Servlet=  Reader<Request,'a  Response>
+type ToStream= abstract member Get: Byte seq
+type Matcher = abstract member Do: (Request->  Byte seq Servlet Option)
                abstract member Info:String
 
 and 'a ParamMatcher='a->Matcher
@@ -34,7 +35,7 @@ type LightController() =
                         let   matched=matchIt request x.Matchers                                                          
                         in match matched with
                                |None-> context.Response.StatusCode <- 404
-                               |Some servlet -> Seq.iter ( fun c -> context.Response.Write (c:char)) <| (runReader servlet request).Content
+                               |Some servlet -> ()//Seq.iter ( fun c -> context.Response.Write (c:char)) <| (runReader servlet request).Content
                 member x.IsReusable= true
 
 ///Need to test how effecient this function is
@@ -52,8 +53,8 @@ let dir (dir:string)(subs :Matcher  list) : Matcher=
                                 else None
          member x.Info= "not documented"  }
 
-let any (s : Servlet) :Matcher= {new Matcher with member x.Do= fun _->Some s
-                                                  member x.Info= "Any"}
+let any (s : Servlet<_>) :Matcher= {new Matcher with member x.Do= fun _->Some s
+                                                     member x.Info= "Any"}
 
 let mime_types ms s:Matcher= 
     {new Matcher with 
@@ -77,15 +78,15 @@ let webMethod1 m (subs :Matcher  list) =
         member x.Info= m.ToString()}
 
 //composable partial responses
-type ComposableServlet= Reader<Request,Response Endo>
+type ComposableServlet<'a,'b>= Reader<Request,'a Response -> 'b Response>
 //hacky
-let (-|) :(ComposableServlet)-> (ComposableServlet) -> ComposableServlet= (>>>)
+let ll :_-> _ -> ComposableServlet<'a,'b>= (>>>)
 
-let yield_string (s:string):ComposableServlet=  reader{return fun res -> {res with Content=Seq.append res.Content <| s.ToCharArray()}}                                                                    
+let yield_string (s:string):ComposableServlet<_,Char seq>=  reader{return fun (meta,_) -> (meta,Seq.ofArray <| s.ToCharArray())}                                                                    
                                                          
-let mime t :ComposableServlet = reader{return fun res -> {res with MimeType=t}}
-let code code :ComposableServlet=reader{return fun res ->{res with Status=(code,"")}}
-let ok:ComposableServlet = code 200 
+let mime t :ComposableServlet<'a,'a> = reader{return fun (meta,content) -> {meta with MimeType=t},content}
+let code code :ComposableServlet<'a,'a>=reader{return fun (meta,content) ->{meta with Status=(code,"")},content}
+let ok<'a> :ComposableServlet<'a,'a>  = code 200 
 let text_html= "text/html"
 let no_content (s:string)=code 204  >>> mime text_html >>> yield_string  s
 
@@ -96,13 +97,19 @@ let yield_html (html:Html)= mime text_html >>> yield_string (html |> to_s)
 
 //using data in Request object
 //I need to define more useful composable data functions
-let from_data f ts : ComposableServlet= reader {let! r= asks f in return! ts r}
+let from_data f ts : ComposableServlet<'a,'b>= reader {let! r= asks f in return! ts r}
 
-let blank= returnR {Response.Status=(200,"");MimeType="";Content=Seq.empty}                                         
-let doNothing=ok <*>  blank
+let blank<'a>= returnR ({ResponseMeta.Status=(200,"");MimeType="";},Seq.empty) 
+let somethingElse= ok <*>  returnR ({ResponseMeta.Status=(200,"");MimeType="";},"vxvxc")                                           
+let doNothing<'a>=ok <*>  blank
+
+
+let getByte (c:char):byte array= ( System.Text.Encoding.UTF8.GetBytes([|c|])) 
+//really horrible!
+let toByteResponse= reader{return fun (meta,chars:Char seq)-> (meta, Seq.concat <| Seq.map getByte chars)}
 
 let combination= dir "products" [dir "old"
                                [webMethod Get doNothing;
-                                webMethod Post (ok >>> yield_string "post on products/old" <*> blank)]] 
+                                webMethod Post (ok >>> yield_string "post on products/old" >>> toByteResponse <*> blank)]] 
                   
 type SimpleDispatcher= inherit LightController override x.Matchers=[combination]             

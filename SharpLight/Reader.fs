@@ -4,7 +4,6 @@ let runReader (Reader f) env = f env
 let returnR :'a ->Reader<'r,'a> = fun a -> Reader (fun _ -> a)
 let bind : Reader<'r,'a> -> ('a -> Reader<'r, 'b>) -> Reader<'r, 'b>= 
     fun m k -> Reader (fun r -> runReader (k (runReader m r)) r)
-
 type ReaderBuilder() =
   member this.Return(a)  = 
     Reader (fun _ -> a)
