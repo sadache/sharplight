@@ -24,7 +24,7 @@ let matchXUrl pattern :string->(Map<string,string>* string ) Option=
 
 let urlParams= matchXUrl "Show/(?<topics>.*)/(?<id>[\\d]+)/(?<title>[-\\w]+)/(?<rest>.*)" "http://localhost/Show/Topic/SubTopic/SubSubTopic/123/This-is-an-example/rest/evenmore/tomatch/later"
 
-let matchUrl pattern =
+let matchUrl_ pattern =
     let simpleTemplateRegex=new Regex "{([-\\w]+)}" in
     let final=simpleTemplateRegex.Replace(pattern,
                  fun (m:Match) -> let trimmed=m.Value.Trim([|'{';'}'|])in 
@@ -33,8 +33,8 @@ let matchUrl pattern =
     in matchXUrl final
 
 
-let result= matchUrl "Show/{topics}/{id}/{title}/{_}" "http://localhost/Show/Topic/123/This-is-an-example/rest/evenmore/tomatch/later"
-let result1= matchUrl "Show/{topics}/{id}/{title}/{_}/{later}" "http://localhost/Show/Topic/123/This-is-an-example/rest/evenmore/tomatch/later"
+let result= matchUrl_ "Show/{topics}/{id}/{title}/{_}" "http://localhost/Show/Topic/123/This-is-an-example/rest/evenmore/tomatch/later"
+let result1= matchUrl_ "Show/{topics}/{id}/{title}/{_}/{later}" "http://localhost/Show/Topic/123/This-is-an-example/rest/evenmore/tomatch/later"
 
 let lazySplit s c=LazyList.unfold (fun (s:string) -> match s.Split([|c|],2) with |[|""|] -> None
                                                                                  |[|a|] -> Some(a,"")
@@ -48,20 +48,20 @@ let rec foldr (f: 'a -> 's Lazy-> 's  ) z list=
 let concatMap m1 m2= Map.fold (fun m key value-> Map.add key value m) m1 m2
 
 // This function looks very hacky and buggy for me, I have to come back to it
-let matchUrlSectionedNoGreedy (pattern:string) = 
- let simpleTemplateRegex=new Regex "{([-\\w]+)}"
- let patternInRegex=simpleTemplateRegex.Replace(pattern,
-                      fun (m:Match) -> let trimmed=m.Value.Trim([|'{';'}'|])in 
-                                        System.String.Format("(?<{0}>[-\\w]+)",trimmed) )
- let patternSplitted=LazyList.map (fun p -> new Regex(p)) (lazySplit patternInRegex '/')
- fun (url:string)->
-    let dirSplitted=lazySplit url '/'     
-    if(LazyList.length dirSplitted < LazyList.length patternSplitted) then None
-    else let concerned,rest= splitAt (LazyList.length patternSplitted)  dirSplitted
-         let matched= LazyList.map2 ( matchAndExtractParams) patternSplitted concerned
-         let result= foldr (fun m previous -> maybe{let! a=m 
-                                                    let! p= previous.Value
-                                                    return concatMap  p a }) (Some Map.empty) matched 
-         in Option.map (fun m -> (m,String.concat "/" rest)) result
+let matchUrlSectionedNoGreedy (pattern:string):string->(Map<string,string>* string ) Option = 
+     let simpleTemplateRegex=new Regex "{([-\\w]+)}"
+     let patternInRegex=simpleTemplateRegex.Replace(pattern,
+                          fun (m:Match) -> let trimmed=m.Value.Trim([|'{';'}'|])in 
+                                            System.String.Format("(?<{0}>[-\\w]+)",trimmed) )
+     let patternSplitted=LazyList.map (fun p -> new Regex(p)) (lazySplit patternInRegex '/')
+     fun (url:string)->
+        let dirSplitted=lazySplit url '/'     
+        if(LazyList.length dirSplitted < LazyList.length patternSplitted) then None
+        else let concerned,rest= splitAt (LazyList.length patternSplitted)  dirSplitted
+             let matched= LazyList.map2 ( matchAndExtractParams) patternSplitted concerned
+             let result= foldr (fun m previous -> maybe{let! a=m 
+                                                        let! p= previous.Value
+                                                        return concatMap  p a }) (Some Map.empty) matched 
+             in Option.map (fun m -> (m,String.concat "/" rest)) result
             
 let anotherResult= matchUrlSectionedNoGreedy "Show/{topics}/{id}/{title}" "Show/Topic/123/This-is-an-example/rest/evenmore/tomatch/later"

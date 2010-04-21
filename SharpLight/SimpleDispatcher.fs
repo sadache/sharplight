@@ -8,13 +8,12 @@ open System.Web
 open Reader
 
 type Url= String
-type  Request= {Request:Web.HttpRequest;UrlParts:string LazyList;Method:Method;AcceptedMime: string seq;UrlParams:Map<string,string>}
+type  Request= {Request:Web.HttpRequest;UrlParts:string ;Method:Method;AcceptedMime: string seq;UrlParams:Map<string,string>}
 and   Method= Get|Post|Put|Unsupported
 type ResponseMeta={ Status:int*string;MimeType:string}
 type 'a Response =ResponseMeta * 'a
 type 'a Servlet=  Reader<Request,'a  Response>
-type ToStream= abstract member Get: Byte seq
-type Matcher = abstract member Do: (Request->  Byte seq Servlet Option)
+type Matcher = abstract member Do: (Request->  byte seq Servlet Option)
                abstract member Info:String
 
 and 'a ParamMatcher='a->Matcher
@@ -28,7 +27,7 @@ type LightController() =
                 member x.ProcessRequest context= 
                         let makeRequest r=   {Request=r; 
                                               UrlParams=Map.empty;
-                                              UrlParts= (r.Path.Trim [|'/'|]) .Split [|'/'|] |> LazyList.ofArray
+                                              UrlParts= r.Path
                                               Method=match r.HttpMethod with |"GET"->Get |"Post" ->Post|_-> Unsupported;
                                               AcceptedMime=r.AcceptTypes}
                         let request=makeRequest context.Request 
@@ -38,20 +37,25 @@ type LightController() =
                                |Some servlet -> Seq.iter ( fun c -> context.Response.OutputStream.WriteByte (c:byte)) <| snd (runReader servlet request)
                 member x.IsReusable= true
 
-///Need to test how effecient this function is
-///
 
-
-type urlParams=Map<string,string> 
 //TODO I might need a State monad here!
 //matchers
-let dir (dir:string)(subs :Matcher  list) : Matcher=  
-       let dirSplitted=(LazyList.ofArray <| dir.Split('/'))
+
+let dirWith (matchingFunction) (dir:string) (subs :Matcher  list) : Matcher=  
+       let matchingFunction:string->(Map<string,string> * string ) Option=matchingFunction dir
        in {new Matcher with
-         member x.Do=fun rq->let concerned,rest= splitAt (LazyList.length dirSplitted) rq.UrlParts
-                             in if  dirSplitted = concerned then matchIt  {rq with UrlParts= rest;} subs 
-                                else None
-         member x.Info= "not documented"  }
+            member x.Do=fun rq-> 
+                Option.bind <| (fun r-> matchIt <| {rq with UrlParts= snd r;UrlParams= UrlPatterns.concatMap rq.UrlParams <| fst r }
+                                                <| subs)
+                            <|(matchingFunction rq.UrlParts)
+
+            member x.Info= "not documented"  }
+
+let dirX = dirWith UrlPatterns.matchXUrl
+let dir_ = dirWith UrlPatterns.matchUrl_
+let dir  = dirWith UrlPatterns.matchUrlSectionedNoGreedy
+
+let fantomDir= ()
 
 let any (s : Servlet<_>) :Matcher= {new Matcher with member x.Do= fun _->Some s
                                                      member x.Info= "Any"}
@@ -67,7 +71,7 @@ let webMethod m s : Matcher=
          member x.Do =fun rq -> if rq.Method = m then Some s else None
          member x.Info= m.ToString() }
 
-let web_get s= webMethod Get s
+let web_get  s= webMethod Get s
 let web_post s= webMethod Post s
 
 
@@ -78,9 +82,9 @@ let webMethod1 m (subs :Matcher  list) =
         member x.Info= m.ToString()}
 
 //composable partial responses
+//not sure how doable it is in F# but a better type could be a ReaderT<Request,State<MetaResponse,'a>>
 type ComposableServlet<'a,'b>= Reader<Request,'a Response -> 'b Response>
-//hacky
-let ll :_-> _ -> ComposableServlet<'a,'b>= (>>>)
+
 
 let yield_string (s:string):ComposableServlet<_,Char seq>=  reader{return fun (meta,_) -> (meta,Seq.ofArray <| s.ToCharArray())}                                                                    
                                                          
@@ -96,7 +100,6 @@ let yield_html (html:Html)= mime text_html >>> yield_string (html |> to_s)
 //let yield_stream  (s:IO.Stream):Servlet= fun res  _ -> {res with  Content= s.
 
 //using data in Request object
-//I need to define more useful composable data functions
 let from_data f ts : ComposableServlet<'a,'b>= reader {let! r= asks f in return! ts r}
 
 let blank<'a>= returnR ({ResponseMeta.Status=(200,"");MimeType="";},Seq.empty) 
