@@ -55,7 +55,7 @@ let dirX = dirWith UrlPatterns.matchXUrl
 let dir_ = dirWith UrlPatterns.matchUrl_
 let dir  = dirWith UrlPatterns.matchUrlSectionedNoGreedy
 
-let fantomDir= ()
+let fantom (matcher:Request -> Reader<Request,'a  Response Endo> Option ) subs :Matcher= 
 
 let any (s : Servlet<_>) :Matcher= {new Matcher with member x.Do= fun _->Some s
                                                      member x.Info= "Any"}
