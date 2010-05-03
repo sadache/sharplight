@@ -6,6 +6,7 @@ open LazyList
 open Html
 open System.Web
 open Reader
+open Maybe
 
 type Url= String
 type  Request= {Request:Web.HttpRequest;UrlParts:string ;Method:Method;AcceptedMime: string seq;UrlParams:Map<string,string>}
@@ -15,8 +16,6 @@ type 'a Response =ResponseMeta * 'a
 type 'a Servlet=  Reader<Request,'a  Response>
 type Matcher = abstract member Do: (Request->  byte seq Servlet Option)
                abstract member Info:String
-
-and 'a ParamMatcher='a->Matcher
 
 let matchIt rq (matchers:Matcher list)=  [for m in matchers -> m.Do]|> Seq.tryPick ((|>) rq) 
 
@@ -55,7 +54,14 @@ let dirX = dirWith UrlPatterns.matchXUrl
 let dir_ = dirWith UrlPatterns.matchUrl_
 let dir  = dirWith UrlPatterns.matchUrlSectionedNoGreedy
 
-let fantom (matcher:Request -> Reader<Request,'a  Response Endo> Option ) subs :Matcher= 
+//let preFantom (matcher:Request -> Reader<Request,byte seq  Response Endo> Option ) (subs :Matcher  list) :Matcher= 
+        
+
+let postFantom (matcher:Request -> Reader<Request,byte seq  Response Endo> Option ) (subs :Matcher  list) :Matcher= 
+        {new Matcher with member x.Do= fun req -> maybe{let! endo=matcher req
+                                                        let! xx= matchIt req subs
+                                                        return endo <*> xx}
+                          member x.Info= "Any"}   
 
 let any (s : Servlet<_>) :Matcher= {new Matcher with member x.Do= fun _->Some s
                                                      member x.Info= "Any"}

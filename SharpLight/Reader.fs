@@ -25,3 +25,5 @@ let (>>>): Reader<'r,('a->'b)> -> Reader<'r,('b->'c)> -> Reader<'r,('a->'c)>=fun
 let (<*>):Reader<'r,('a->'b)> -> Reader<'r,'a>-> Reader<'r,('b)>= fun f_ b_ -> reader{let! f=f_
                                                                                       let! b=b_
                                                                                       return f b}
+
+
