@@ -63,6 +63,7 @@ let postFantom (matcher:Request -> Reader<Request,byte seq  Response Endo> Optio
                                                         return endo <*> xx}
                           member x.Info= "Any"}   
 
+
 let any (s : Servlet<_>) :Matcher= {new Matcher with member x.Do= fun _->Some s
                                                      member x.Info= "Any"}
 
@@ -108,8 +109,7 @@ let yield_html (html:Html)= mime text_html >>> yield_string (html |> to_s)
 //using data in Request object
 let from_data f ts : ComposableServlet<'a,'b>= reader {let! r= asks f in return! ts r}
 
-let blank<'a>= returnR ({ResponseMeta.Status=(200,"");MimeType="";},Seq.empty) 
-let somethingElse= ok <*>  returnR ({ResponseMeta.Status=(200,"");MimeType="";},"vxvxc")                                           
+let blank<'a>= returnR ({ResponseMeta.Status=(200,"");MimeType="";},Seq.empty)                                          
 let doNothing<'a>=ok <*>  blank
 
 

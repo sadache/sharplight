@@ -1,4 +1,5 @@
 ﻿module Reader
+open FunUtils
 type Reader<'r,'a> = Reader of ('r -> 'a)
 let runReader (Reader f) env = f env
 let returnR :'a ->Reader<'r,'a> = fun a -> Reader (fun _ -> a)
@@ -19,11 +20,13 @@ let asks f = reader {
   let! r = ask
   return (f r) }
 
-let (>>>): Reader<'r,('a->'b)> -> Reader<'r,('b->'c)> -> Reader<'r,('a->'c)>=fun f_ g_ -> reader{let! f= f_
-                                                                                                 let! g= g_
-                                                                                                 return f >> g}
+let ( >>>): Reader<'r,('a->'b)> -> Reader<'r,('b->'c)> -> Reader<'r,('a->'c)>=fun f_ g_ -> reader{let! f= f_
+                                                                                                  let! g= g_
+                                                                                                  return f >> g}
+
+let ( *>>)=(>>>)
 let (<*>):Reader<'r,('a->'b)> -> Reader<'r,'a>-> Reader<'r,('b)>= fun f_ b_ -> reader{let! f=f_
                                                                                       let! b=b_
                                                                                       return f b}
 
-
+let ( |*> ) a b = b <*> a

@@ -1,8 +1,4 @@
 ﻿module UrlPatterns
-#if INTERACTIVE
-#r "..//Dependencies//FSharp.PowerPack.dll"
-#load "Maybe.fs" "FunUtils.fs"
-#endif
 open System.Text.RegularExpressions
 open FunUtils
 open Maybe

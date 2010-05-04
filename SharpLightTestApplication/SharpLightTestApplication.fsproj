@@ -38,6 +38,7 @@
     <Compile Include="Main.fs" />
     <None Include="Script.fsx" />
     <Content Include="Web.config" />
+    <None Include="CoolCombining.fsx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core" />
